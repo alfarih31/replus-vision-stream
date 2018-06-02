@@ -38,10 +38,12 @@ socketServer.broadcast = function(path, data) {
 	socketServer.clients.forEach(function each(client) {
 		if (client.readyState === WebSocket.OPEN) {
 			//client.send(data);
+			//this.tosend = toArrayBuffer(data);
 			client.send(JSON.stringify({"event":path,"data":data}));
 		}
 	});
 };
+
 
 // HTTP Server to accept incomming MPEG-TS Stream from ffmpeg
 var streamServer = http.createServer( function(request, response) {

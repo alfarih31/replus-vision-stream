@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>JSMpeg Stream Client</title>
+	<title>Replus Vision Stream</title>
 	<style type="text/css">
 		html, body {
 			background-color: #FFFFFF;
 			text-align: center;
 		}
 	</style>
-	<script type="text/javascript" src="jsmpeg.min.js"></script>
 </head>
 <body>
 	<canvas id="video-canvas"></canvas>
+	<script type="text/javascript" src="rs-streamer.js"></script>
 	<script type="text/javascript">
+
 		this.dev_uid = window.location.search.substr(1).split('dev_uid=')[1];
 		javascript:alert('Streaming on device: '+this.dev_uid);
 		this.canvas = document.getElementById("video-canvas");
