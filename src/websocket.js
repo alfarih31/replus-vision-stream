@@ -51,6 +51,7 @@ WSSource.prototype.resume = function(secondsHeadroom) {
 WSSource.prototype.onOpen = function() {
 	this.progress = 1;
 	this.established = true;
+	this.socket.send(this.event);
 };
 
 WSSource.prototype.onClose = function() {
@@ -62,22 +63,9 @@ WSSource.prototype.onClose = function() {
 	}
 };
 
-var aLtoBuffer = function(al){
-	var ab = new ArrayBuffer(al.length);
-	var view = new Uint8Array(ab);
-	for (var i = 0; i < al.length; ++i) {
-        view[i] = al[i];
-	};
-    return ab;
-};
-
 WSSource.prototype.onMessage = function(ev) {
 	if (this.destination) {
-		this.data = JSON.parse(ev.data);
-		if (this.data['event'] == this.event){
-			this.tosend = aLtoBuffer(this.data['data'].data);
-			this.destination.write(this.tosend);
-		};
+		this.destination.write(ev.data);
 	};
 };
 

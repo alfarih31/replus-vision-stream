@@ -11,6 +11,9 @@ var fs = require('fs'),
 var STREAM_PORT = 8081,
 	WEBSOCKET_PORT = 8082;
 
+var clients = {};
+var id = 0;
+
 // Websocket Server
 var socketServer = new WebSocket.Server({port: WEBSOCKET_PORT, perMessageDeflate: false});
 socketServer.connectionCount = 0;
@@ -22,8 +25,15 @@ socketServer.on('connection', function(socket, upgradeReq) {
 		(upgradeReq || socket.upgradeReq).headers['user-agent'],
 		'('+socketServer.connectionCount+' total)'
 	);
+	
+	socket.on('message', function(message){
+		clients[id] = {'socket': socket, 'dev_uid':message};
+		id++;
+	});
 
 	socket.on('close', function(code, message){
+		delete clients[id];
+		id--;
 		socketServer.connectionCount--;
 		socket.close();
 		console.log(
@@ -33,17 +43,17 @@ socketServer.on('connection', function(socket, upgradeReq) {
 });
 
 
-
-socketServer.broadcast = function(path, data) {
-	socketServer.clients.forEach(function each(client) {
-		if (client.readyState === WebSocket.OPEN) {
-			//client.send(data);
-			//this.tosend = toArrayBuffer(data);
-			client.send(JSON.stringify({"event":path,"data":data}));
-		}
-	});
+sendData = function(path, data){
+	for(var i = 0; i<id+1; i++){
+		if (clients[i]){
+			if (path == clients[i]['dev_uid']){
+				if (clients[i]['socket'].readyState === WebSocket.OPEN){
+					clients[i]['socket'].send(data);
+				};
+			};
+		};
+	};
 };
-
 
 // HTTP Server to accept incomming MPEG-TS Stream from ffmpeg
 var streamServer = http.createServer( function(request, response) {
@@ -56,7 +66,7 @@ var streamServer = http.createServer( function(request, response) {
 		request.socket.remotePort + '/' + params
 	);
 	request.on('data', function(data){
-		socketServer.broadcast(params, data);
+		sendData(params, data);
 		if (request.socket.recording) {
 			request.socket.recording.write(data);
 		}
