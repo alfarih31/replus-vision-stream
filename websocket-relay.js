@@ -11,12 +11,10 @@ var fs = require('fs'),
 var STREAM_PORT = 8081,
 	WEBSOCKET_PORT = 8082;
 
-var clients = {};
-var id = 0;
-
 // Websocket Server
 var socketServer = new WebSocket.Server({port: WEBSOCKET_PORT, perMessageDeflate: false});
 socketServer.connectionCount = 0;
+socketServer.room=[];
 socketServer.on('connection', function(socket, upgradeReq) {
 	socketServer.connectionCount++;
 	console.log(
@@ -27,13 +25,10 @@ socketServer.on('connection', function(socket, upgradeReq) {
 	);
 	
 	socket.on('message', function(message){
-		clients[id] = {'socket': socket, 'dev_uid':message};
-		id++;
+		socket.room = message;
 	});
 
 	socket.on('close', function(code, message){
-		delete clients[id];
-		id--;
 		socketServer.connectionCount--;
 		socket.close();
 		console.log(
@@ -44,15 +39,11 @@ socketServer.on('connection', function(socket, upgradeReq) {
 
 
 sendData = function(path, data){
-	for(var i = 0; i<id+1; i++){
-		if (clients[i]){
-			if (path == clients[i]['dev_uid']){
-				if (clients[i]['socket'].readyState === WebSocket.OPEN){
-					clients[i]['socket'].send(data);
-				};
-			};
+	socketServer.clients.forEach(function(client){
+		if(client.room==path && client.readyState === WebSocket.OPEN){
+			client.send(data);
 		};
-	};
+	});
 };
 
 // HTTP Server to accept incomming MPEG-TS Stream from ffmpeg
